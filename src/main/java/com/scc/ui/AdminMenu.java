@@ -3,6 +3,7 @@ package com.scc.ui;
 import com.scc.dao.UserDao;
 import com.scc.model.User;
 
+import java.util.List;
 import java.util.Scanner;
 
 public class AdminMenu {
@@ -14,8 +15,9 @@ public class AdminMenu {
         this.sc = sc;
     }
 
-    public void display(User user) {
+    public void display(User admin) {
         boolean running = true;
+
         while (running) {
             System.out.println();
             System.out.println("========================================");
@@ -33,31 +35,120 @@ public class AdminMenu {
             String choice = sc.next();
 
             switch (choice) {
-                case "1":
-                    System.out.println("Coming soon.");
-                    break;
-                case "2":
-                    System.out.println("Coming soon.");
-                    break;
-                case "3":
-                    System.out.println("Coming soon.");
-                    break;
-                case "4":
-                    System.out.println("Coming soon.");
-                    break;
-                case "5":
-                    System.out.println("Coming soon.");
-                    break;
-                case "6":
-                    System.out.println("Coming soon.");
-                    break;
-                case "0":
+                case "2" -> manageUsers();
+                case "1", "3", "4", "5", "6" -> System.out.println("Coming soon.");
+                case "0" -> {
                     System.out.println("You have been logged out.");
-                    running = false; // goes back to the main menu
-                    break;
-                default:
-                    System.out.println("Invalid choice. Please try again.");
+                    running = false;
+                }
+                default -> System.out.println("Invalid choice. Please try again.");
             }
         }
+    }
+
+    // Submenu for option [2]: the user management features.
+    private void manageUsers() {
+        boolean running = true;
+
+        while (running) {
+            System.out.println();
+            System.out.println("========================================");
+            System.out.println("          MANAGE USERS & ROLES          ");
+            System.out.println("========================================");
+            System.out.println(" [1] View All System Users");
+            System.out.println(" [2] View Pending Registrations");
+            System.out.println(" [3] Approve User Account");
+            System.out.println(" [0] Back");
+            System.out.println("----------------------------------------");
+            System.out.print("Choose an option: ");
+            String choice = sc.next();
+
+            switch (choice) {
+                case "1" -> viewAllUsers();
+                case "2" -> viewPendingUsers();
+                case "3" -> approveUser();
+                case "0" -> running = false;
+                default -> System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+
+    private void viewAllUsers() {
+        System.out.println();
+        System.out.println("ALL SYSTEM USERS");
+        printUserTable(userDao.getAllUsers());
+    }
+
+    private void viewPendingUsers() {
+        System.out.println();
+        System.out.println("PENDING REGISTRATIONS");
+        printUserTable(userDao.getPendingUsers());
+    }
+
+    private void approveUser() {
+        List<User> pending = userDao.getPendingUsers();
+
+        System.out.println();
+        System.out.println("APPROVE USER ACCOUNT");
+        printUserTable(pending);
+
+        if (pending.isEmpty()) {
+            return; // nothing to approve
+        }
+
+        boolean done = false;
+        while (!done) {
+            System.out.print("Enter User ID to approve (0 to cancel): ");
+            String input = sc.next();
+
+            int userId;
+            try {
+                userId = Integer.parseInt(input);
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a number.");
+                continue;
+            }
+
+            if (userId == 0) {
+                System.out.println("Approval cancelled.");
+                return;
+            }
+
+            // Make sure the ID is really in the pending list.
+            User target = null;
+            for (User u : pending) {
+                if (u.id() == userId) {
+                    target = u;
+                    break;
+                }
+            }
+
+            if (target == null) {
+                System.out.println("ID " + userId + " is not in the pending list. Try again.");
+            } else if (userDao.approveUser(userId)) {
+                System.out.println("Success! " + target.username() + " (" + target.roles() + ") has been approved.");
+                done = true;
+            } else {
+                System.out.println("Could not approve the account. Please try again.");
+                done = true;
+            }
+        }
+    }
+
+    // Prints any list of users as a neat table with aligned columns.
+    private void printUserTable(List<User> users) {
+        if (users.isEmpty()) {
+            System.out.println("No users to show.");
+            return;
+        }
+
+        String border = "+-------+-----------------+--------------+------------+";
+        System.out.println(border);
+        System.out.printf("| %-5s | %-15s | %-12s | %-10s |%n", "ID", "Username", "Role", "Status");
+        System.out.println(border);
+        for (User u : users) {
+            System.out.printf("| %-5d | %-15s | %-12s | %-10s |%n", u.id(), u.username(), u.roles(), u.status());
+        }
+        System.out.println(border);
     }
 }

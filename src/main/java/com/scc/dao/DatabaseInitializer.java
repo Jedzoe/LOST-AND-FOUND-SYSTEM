@@ -66,7 +66,7 @@ public class DatabaseInitializer {
                     action_type TEXT NOT NULL,
                     description TEXT,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (user_id) REFERENCES users(id)
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
                 )
                 """;
 

@@ -61,11 +61,11 @@ public class DatabaseInitializer {
         // 5. activity_logs (SQL TABLE)
         String logsTable = """
                 CREATE TABLE IF NOT EXISTS activity_logs (
-                    log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id INTEGER NOT NULL,
                     action_type TEXT NOT NULL,
                     description TEXT,
-                    log_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (user_id) REFERENCES users(id)
                 )
                 """;

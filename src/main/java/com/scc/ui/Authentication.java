@@ -2,11 +2,12 @@ package com.scc.ui;
 
 import com.scc.dao.UserDao;
 import com.scc.model.User;
+import com.scc.dao.ActivityLogDao;
 
 import java.util.Scanner;
 
 public class Authentication {
-
+    private final ActivityLogDao logDao = new ActivityLogDao();
     private final UserDao userDao;
     private final Scanner sc;
 
@@ -55,6 +56,8 @@ public class Authentication {
 
         if (user != null) {
             System.out.println("Login successful! Welcome, " + user.username() + "ROLE: " + user.roles());
+            logDao.logAction(user.id(), "LOGIN",
+                    "User " + user.username() + " (ID: " + user.id() + ") logged in.");
 
             switch (user.roles()) {
                 case "ADMIN":
@@ -69,6 +72,9 @@ public class Authentication {
                 default:
                     System.out.println("Unknown role. Access denied.");
             }
+
+            logDao.logAction(user.id(), "LOGOUT",
+                    "User " + user.username() + " (ID: " + user.id() + ") logged out.");
         }
     }
 

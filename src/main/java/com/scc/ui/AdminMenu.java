@@ -2,12 +2,15 @@ package com.scc.ui;
 
 import com.scc.dao.UserDao;
 import com.scc.model.User;
+import com.scc.dao.ActivityLogDao;
+import com.scc.model.ActivityLog;
 
 import java.util.List;
 import java.util.Scanner;
 
 public class AdminMenu {
     private final UserDao userDao;
+    private final ActivityLogDao logDao = new ActivityLogDao();
     private final Scanner sc;
 
     public AdminMenu(UserDao userDao, Scanner sc) {
@@ -36,7 +39,8 @@ public class AdminMenu {
 
             switch (choice) {
                 case "2" -> manageUsers(admin);
-                case "1", "3", "4", "5", "6" -> System.out.println("Coming soon.");
+                case "6" -> viewAuditLogs();
+                case "1", "3", "4", "5" -> System.out.println("Coming soon.");
                 case "0" -> {
                     System.out.println("You have been logged out.");
                     running = false;
@@ -67,7 +71,7 @@ public class AdminMenu {
             switch (choice) {
                 case "1" -> viewAllUsers();
                 case "2" -> viewPendingUsers();
-                case "3" -> approveUser();
+                case "3" -> approveUser(admin);
                 case "4" -> updateUserRoleAndStatus(admin);
                 case "0" -> running = false;
                 default -> System.out.println("Invalid choice. Please try again.");
@@ -87,7 +91,7 @@ public class AdminMenu {
         printUserTable(userDao.getPendingUsers());
     }
 
-    private void approveUser() {
+    private void approveUser(User admin) {
         List<User> pending = userDao.getPendingUsers();
 
         System.out.println();
@@ -129,6 +133,8 @@ public class AdminMenu {
                 System.out.println("ID " + userId + " is not in the pending list. Try again.");
             } else if (userDao.approveUser(userId)) {
                 System.out.println("Success! " + target.username() + " (" + target.roles() + ") has been approved.");
+                logDao.logAction(admin.id(), "USER_APPROVED",
+                        "Admin [" + admin.id() + "] approved account for User ID " + userId);
                 done = true;
             } else {
                 System.out.println("Could not approve the account. Please try again.");
@@ -184,9 +190,65 @@ public class AdminMenu {
 
         if (userDao.updateUserRoleAndStatus(target.id(), newRole, newStatus)) {
             System.out.println("Success! " + target.username() + " has been updated to Role: " + newRole + ", Status: " + newStatus);
+            logDao.logAction(admin.id(), "USER_UPDATED",
+                    "Admin [" + admin.id() + "] changed User " + target.id()
+                            + " to role " + newRole + ", status " + newStatus);
         } else {
             System.out.println("Could not update the account. Please try again.");
         }
+    }
+
+    private void viewAuditLogs() {
+        boolean running = true;
+
+        while (running) {
+            System.out.println();
+            System.out.println("========================================");
+            System.out.println("           SYSTEM AUDIT LOGS            ");
+            System.out.println("========================================");
+            System.out.println(" [1] View All System Logs");
+            System.out.println(" [2] Filter Logs by User ID");
+            System.out.println(" [0] Back");
+            System.out.println("----------------------------------------");
+            System.out.print("Choose an option: ");
+            String choice = sc.next();
+
+            switch (choice) {
+                case "1" -> printLogTable(logDao.getAllLogs());
+                case "2" -> {
+                    int userId = readIntInput("Enter User ID to filter: ");
+                    printLogTable(logDao.getLogsByUserId(userId));
+                }
+                case "0" -> running = false;
+                default -> System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+
+    private void printLogTable(List<ActivityLog> logs) {
+        System.out.println();
+        if (logs.isEmpty()) {
+            System.out.println("No logs to show.");
+            return;
+        }
+
+        String format = "%-5s | %-8s | %-18s | %-35s | %-20s%n";
+        String line = "-".repeat(5 + 3 + 8 + 3 + 18 + 3 + 35 + 3 + 20);
+
+        System.out.println(line);
+        System.out.printf(format, "ID", "User ID", "Action Type", "Description", "Timestamp");
+        System.out.println(line);
+        for (ActivityLog l : logs) {
+            System.out.printf(format, l.logId(), l.userId(), l.actionType(),
+                    shorten(l.description(), 35), l.timestamp());
+        }
+        System.out.println(line);
+    }
+
+    // Keeps long descriptions from breaking the column alignment.
+    private String shorten(String text, int max) {
+        if (text == null) return "";
+        return text.length() <= max ? text : text.substring(0, max - 3) + "...";
     }
 
     private int readIntInput(String prompt) {
@@ -203,31 +265,21 @@ public class AdminMenu {
 
     private String readValidRole() {
         while (true) {
-            System.out.print("Enter new Status (APPROVED, PENDING, REJECTED) or 0 to cancel: ");
+            System.out.print("Enter new Role (ADMIN, STAFF, USER) or 0 to cancel: ");
             String input = sc.next().trim().toUpperCase();
-
-            if (input.equals("0")) {
-                return null;
-            }
-            if (input.equals("APPROVED") || input.equals("PENDING") || input.equals("REJECTED")) {
-                return input;
-            }
-            System.out.println("Invalid input. Please enter a valid status.");
+            if (input.equals("0")) return null;
+            if (input.equals("ADMIN") || input.equals("STAFF") || input.equals("USER")) return input;
+            System.out.println("Invalid input. Please enter a valid role.");
         }
     }
 
     private String readValidStatus() {
         while (true) {
-            System.out.print("Enter new Role (ADMIN, STAFF, USER) or 0 to cancel: ");
+            System.out.print("Enter new Status (APPROVED, PENDING, REJECTED) or 0 to cancel: ");
             String input = sc.next().trim().toUpperCase();
-
-            if (input.equals("0")) {
-                return null;
-            }
-            if (input.equals("ADMIN") || input.equals("STAFF") || input.equals("USER")) {
-                return input;
-            }
-            System.out.println("Invalid input. Please enter a valid role.");
+            if (input.equals("0")) return null;
+            if (input.equals("APPROVED") || input.equals("PENDING") || input.equals("REJECTED")) return input;
+            System.out.println("Invalid input. Please enter a valid status.");
         }
     }
 

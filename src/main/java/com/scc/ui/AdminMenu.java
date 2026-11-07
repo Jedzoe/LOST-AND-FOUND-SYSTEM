@@ -22,7 +22,6 @@ public class AdminMenu {
         boolean running = true;
 
         while (running) {
-            System.out.println();
             System.out.println("========================================");
             System.out.println("               ADMIN MENU               ");
             System.out.println("========================================");
@@ -134,7 +133,7 @@ public class AdminMenu {
             } else if (userDao.approveUser(userId)) {
                 System.out.println("Success! " + target.username() + " (" + target.roles() + ") has been approved.");
                 logDao.logAction(admin.id(), "USER_APPROVED",
-                        "Admin [" + admin.id() + "] approved account for User ID " + userId);
+                        "Admin [" + admin.id() + "] approved User ID " + userId);
                 done = true;
             } else {
                 System.out.println("Could not approve the account. Please try again.");
@@ -191,8 +190,7 @@ public class AdminMenu {
         if (userDao.updateUserRoleAndStatus(target.id(), newRole, newStatus)) {
             System.out.println("Success! " + target.username() + " has been updated to Role: " + newRole + ", Status: " + newStatus);
             logDao.logAction(admin.id(), "USER_UPDATED",
-                    "Admin [" + admin.id() + "] changed User " + target.id()
-                            + " to role " + newRole + ", status " + newStatus);
+                    "Admin [" + admin.id() + "] updated User " + target.id() + ": " + newRole + "/" + newStatus);
         } else {
             System.out.println("Could not update the account. Please try again.");
         }

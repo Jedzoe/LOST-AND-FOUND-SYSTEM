@@ -29,8 +29,8 @@ public class ActivityLogDao {
     }
 
     public List<ActivityLog> getAllLogs() {
-        String sql = "SELECT id, user_id, action_type, description, timestamp "
-                + "FROM activity_logs ORDER BY timestamp DESC, id DESC";
+        String sql = "SELECT log_id, user_id, action_type, description, timestamp "
+                + "FROM activity_logs ORDER BY timestamp DESC, log_id DESC";
         List<ActivityLog> logs = new ArrayList<>();
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -48,8 +48,8 @@ public class ActivityLogDao {
     }
 
     public List<ActivityLog> getLogsByUserId(int userId) {
-        String sql = "SELECT id, user_id, action_type, description, timestamp "
-                + "FROM activity_logs WHERE user_id = ? ORDER BY timestamp DESC, id DESC";
+        String sql = "SELECT log_id, user_id, action_type, description, timestamp "
+                + "FROM activity_logs WHERE user_id = ? ORDER BY timestamp DESC, log_id DESC";
         List<ActivityLog> logs = new ArrayList<>();
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -71,7 +71,7 @@ public class ActivityLogDao {
 
     private ActivityLog mapRow(ResultSet rs) throws SQLException {
         return new ActivityLog(
-                rs.getInt("id"),
+                rs.getInt("log_id"),
                 rs.getInt("user_id"),
                 rs.getString("action_type"),
                 rs.getString("description"),

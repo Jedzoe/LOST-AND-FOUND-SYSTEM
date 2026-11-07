@@ -22,7 +22,8 @@ public class UserDao {
 
     public void defaultAdmin(Connection conn) {
         String checkSql = "SELECT COUNT(*) FROM users WHERE username = 'admin'";
-        String insertsql = "INSERT INTO users (username, password, roles, status) VALUES ('admin', 'admin123', 'ADMIN', 'APPROVED')";
+        String insertsql = "INSERT INTO users (username, password, full_name, contact_number, roles, status) "
+                + "VALUES ('admin', 'admin123', 'System Administrator', 'N/A', 'ADMIN', 'APPROVED')";
 
         try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(checkSql)) {
@@ -36,16 +37,20 @@ public class UserDao {
         }
     }
 
-    public boolean registerUser(String username, String password, String roles, String status) {
+    public boolean registerUser(String username, String password, String fullName,
+                                String contactNumber, String roles, String status) {
 
-        String sql = "INSERT INTO users (username, password, roles, status) VALUES (?, ?, ?, 'PENDING')";
+        String sql = "INSERT INTO users (username, password, full_name, contact_number, roles, status) "
+                + "VALUES (?, ?, ?, ?, ?, 'PENDING')";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, username);
             pstmt.setString(2, password);
-            pstmt.setString(3, roles.toUpperCase());
+            pstmt.setString(3, fullName);
+            pstmt.setString(4, contactNumber);
+            pstmt.setString(5, roles.toUpperCase());
             pstmt.executeUpdate();
             System.out.println("User registered successfully, Waiting for Approval.");
             return true;
@@ -57,7 +62,8 @@ public class UserDao {
     }
 
     public User login(String username, String password) {
-        String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
+        String sql = "SELECT user_id, username, password, full_name, contact_number, roles, status "
+                + "FROM users WHERE username = ? AND password = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -72,12 +78,7 @@ public class UserDao {
                         System.out.println("Your account is pending approval. Please wait for admin approval.");
                         return null;
                     }
-                    return new User(
-                            rs.getInt("id"),
-                            rs.getString("username"),
-                            rs.getString("password"),
-                            rs.getString("roles"),
-                            status);
+                    return mapUser(rs);
                 } else {
                     System.out.println("Invalid username or password.");
                     return null;
@@ -90,9 +91,9 @@ public class UserDao {
         return null;
     }
 
-    // NEW: returns every registered account, whatever the role or status.
     public List<User> getAllUsers() {
-        String sql = "SELECT id, username, password, roles, status FROM users ORDER BY id";
+        String sql = "SELECT user_id, username, password, full_name, contact_number, roles, status "
+                + "FROM users ORDER BY user_id";
         List<User> users = new ArrayList<>();
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -100,12 +101,7 @@ public class UserDao {
              ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
-                users.add(new User(
-                        rs.getInt("id"),
-                        rs.getString("username"),
-                        rs.getString("password"),
-                        rs.getString("roles"),
-                        rs.getString("status")));
+                users.add(mapUser(rs));
             }
 
         } catch (SQLException e) {
@@ -114,9 +110,9 @@ public class UserDao {
         return users;
     }
 
-    // NEW: returns only the accounts that are still PENDING, for every role.
     public List<User> getPendingUsers() {
-        String sql = "SELECT id, username, password, roles, status FROM users WHERE status = ? ORDER BY id";
+        String sql = "SELECT user_id, username, password, full_name, contact_number, roles, status "
+                + "FROM users WHERE status = ? ORDER BY user_id";
         List<User> users = new ArrayList<>();
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -126,12 +122,7 @@ public class UserDao {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    users.add(new User(
-                            rs.getInt("id"),
-                            rs.getString("username"),
-                            rs.getString("password"),
-                            rs.getString("roles"),
-                            rs.getString("status")));
+                    users.add(mapUser(rs));
                 }
             }
 
@@ -141,9 +132,8 @@ public class UserDao {
         return users;
     }
 
-    // NEW: changes one account's status to APPROVED. Returns true if a row was updated.
     public boolean approveUser(int userId) {
-        String sql = "UPDATE users SET status = 'APPROVED' WHERE id = ?";
+        String sql = "UPDATE users SET status = 'APPROVED' WHERE user_id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -158,10 +148,10 @@ public class UserDao {
     }
 
     public boolean updateUserRoleAndStatus(int userId, String role, String status) {
-        String sql = "UPDATE users SET roles = ?, status = ? WHERE id = ?";
+        String sql = "UPDATE users SET roles = ?, status = ? WHERE user_id = ?";
 
-        try(Connection conn = DatabaseConnection.getConnection();
-            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, role.toUpperCase());
             pstmt.setString(2, status.toUpperCase());
@@ -174,4 +164,14 @@ public class UserDao {
         return false;
     }
 
+    private User mapUser(ResultSet rs) throws SQLException {
+        return new User(
+                rs.getInt("user_id"),
+                rs.getString("username"),
+                rs.getString("password"),
+                rs.getString("roles"),
+                rs.getString("status"),
+                rs.getString("full_name"),
+                rs.getString("contact_number"));
+    }
 }

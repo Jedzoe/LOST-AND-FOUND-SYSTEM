@@ -8,18 +8,18 @@ public class DatabaseInitializer {
 
     public static void initialize() {
 
-        // 1. users (SQL TABLE)
         String usersTable = """
                 CREATE TABLE IF NOT EXISTS users (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     username TEXT NOT NULL UNIQUE,
                     password TEXT NOT NULL,
+                    full_name TEXT NOT NULL,
+                    contact_number TEXT NOT NULL,
                     roles TEXT NOT NULL,
                     status TEXT NOT NULL
                 )
                 """;
 
-        // 2. categories (SQL TABLE)
         String categoriesTable = """
                 CREATE TABLE IF NOT EXISTS categories (
                     category_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,7 +27,6 @@ public class DatabaseInitializer {
                 )
                 """;
 
-        // 3. items (SQL TABLE)
         String itemsTable = """
                 CREATE TABLE IF NOT EXISTS items (
                     item_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -39,11 +38,10 @@ public class DatabaseInitializer {
                     status TEXT NOT NULL,
                     reported_by INTEGER NOT NULL,
                     FOREIGN KEY (category_id) REFERENCES categories(category_id),
-                    FOREIGN KEY (reported_by) REFERENCES users(id)
+                    FOREIGN KEY (reported_by) REFERENCES users(user_id)
                 )
                 """;
 
-        // 4. claims (SQL TABLE)
         String claimsTable = """
                 CREATE TABLE IF NOT EXISTS claims (
                     claim_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,20 +51,19 @@ public class DatabaseInitializer {
                     released_by INTEGER NOT NULL,
                     date_released TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (item_id) REFERENCES items(item_id),
-                    FOREIGN KEY (claimant_id) REFERENCES users(id),
-                    FOREIGN KEY (released_by) REFERENCES users(id)
+                    FOREIGN KEY (claimant_id) REFERENCES users(user_id),
+                    FOREIGN KEY (released_by) REFERENCES users(user_id)
                 )
                 """;
 
-        // 5. activity_logs (SQL TABLE)
-        String logsTable = """
+        String activityLogsTable = """
                 CREATE TABLE IF NOT EXISTS activity_logs (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    log_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id INTEGER NOT NULL,
                     action_type TEXT NOT NULL,
                     description TEXT,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
                 )
                 """;
 
@@ -77,7 +74,7 @@ public class DatabaseInitializer {
             stmt.execute(categoriesTable);
             stmt.execute(itemsTable);
             stmt.execute(claimsTable);
-            stmt.execute(logsTable);
+            stmt.execute(activityLogsTable);
 
             System.out.println("Database initialized.");
 

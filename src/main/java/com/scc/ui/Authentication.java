@@ -1,8 +1,8 @@
 package com.scc.ui;
 
+import com.scc.dao.ActivityLogDao;
 import com.scc.dao.UserDao;
 import com.scc.model.User;
-import com.scc.dao.ActivityLogDao;
 
 import java.util.Scanner;
 
@@ -55,9 +55,9 @@ public class Authentication {
         User user = userDao.login(username, password);
 
         if (user != null) {
-            System.out.println("Login successful! Welcome, " + user.username() + "ROLE: " + user.roles());
+            System.out.println("Login successful! Welcome, " + user.username() + " ROLE: " + user.roles());
             logDao.logAction(user.id(), "LOGIN",
-                    "User " + user.username() + " (ID: " + user.id() + ") logged in.");
+                    user.username() + " (ID: " + user.id() + ") logged in.");
 
             switch (user.roles()) {
                 case "ADMIN":
@@ -74,7 +74,7 @@ public class Authentication {
             }
 
             logDao.logAction(user.id(), "LOGOUT",
-                    "User " + user.username() + " (ID: " + user.id() + ") logged out.");
+                    user.username() + " (ID: " + user.id() + ") logged out.");
         }
     }
 
@@ -83,6 +83,27 @@ public class Authentication {
         String username = sc.next();
         System.out.print("Enter a new password: ");
         String password = sc.next();
+
+        sc.nextLine(); // clears the leftover newline
+        String fullName = "";
+        while (fullName.isEmpty()) {
+            System.out.print("Enter full name: ");
+            fullName = sc.nextLine().trim();
+            if (fullName.isEmpty()) {
+                System.out.println("Full name is required.");
+            }
+        }
+
+        String contactNumber;
+        while (true) {
+            System.out.print("Enter contact number (11 digits): ");
+            contactNumber = sc.next().trim();
+            if (contactNumber.matches("\\d{11}")) {
+                break;
+            }
+            System.out.println("Invalid contact number. Please enter 11 digits.");
+        }
+
         System.out.print("Enter role [1] Admin, [2] Staff, [3] User: ");
         int roleChoice = sc.nextInt();
 
@@ -94,7 +115,7 @@ public class Authentication {
         };
 
         if (role != null) {
-            userDao.registerUser(username, password, role, "PENDING");
+            userDao.registerUser(username, password, fullName, contactNumber, role, "PENDING");
         } else {
             System.out.println("Invalid role choice. Please try again.");
         }

@@ -26,8 +26,7 @@ public class Authentication {
             System.out.println("1. Login");
             System.out.println("2. Register");
             System.out.println("3. Exit");
-            System.out.print("Choose an option: ");
-            int choice = sc.nextInt();
+            int choice = readInt("Choose an option: ");
 
             switch (choice) {
                 case 1:
@@ -104,8 +103,7 @@ public class Authentication {
             System.out.println("Invalid contact number. Please enter 11 digits.");
         }
 
-        System.out.print("Enter role [1] Admin, [2] Staff, [3] User: ");
-        int roleChoice = sc.nextInt();
+        int roleChoice = readInt("Enter role [1] Admin, [2] Staff, [3] User: ");
 
         String role = switch (roleChoice) {
             case 1 -> "Admin";
@@ -120,4 +118,17 @@ public class Authentication {
             System.out.println("Invalid role choice. Please try again.");
         }
     }
+
+    private int readInt(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = sc.next();
+            try {
+                return Integer.parseInt(input);
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a valid number.");
+            }
+        }
+    }
+
 }
